@@ -17,9 +17,9 @@ export default function Index() {
 
   async function scan() {
     // Opens the phone's own document scanner (ML Kit on Android)
-    const result = await CameraView.scanDocumentAsync();
+    const result = await CameraView.scanDocumentAsync({ requestPdf: true });
     if (!result) return; // cancelled, or no scanner on this phone
-    const saved = await saveScan(result.pages);
+    const saved = await saveScan(result.pages, result.pdfUri);
     setScans((list) => [saved, ...list]);
   }
 

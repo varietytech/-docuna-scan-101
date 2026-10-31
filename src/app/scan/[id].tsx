@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, FlatList, Pressable, Text, View, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { deleteScan, getScan, pageUri, type Scan } from "@/lib/scans";
+import { deleteScan, getScan, pageUri, sharePdf, type Scan } from "@/lib/scans";
 
 export default function ScanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,6 +41,11 @@ export default function ScanScreen() {
       />
 
       <View style={styles.actions}>
+        {scan.hasPdf && (
+          <Pressable style={styles.action} onPress={() => sharePdf(scan)}>
+            <Text style={styles.actionText}>Share PDF</Text>
+          </Pressable>
+        )}
         <Pressable style={[styles.action, styles.danger]} onPress={remove}>
           <Text style={styles.actionText}>Delete</Text>
         </Pressable>

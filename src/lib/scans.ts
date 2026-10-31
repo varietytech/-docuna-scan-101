@@ -1,9 +1,11 @@
 import { Directory, File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 export type Scan = {
   id: string;
   createdAt: number;
   pages: string[]; // file names inside the scan's folder
+  hasPdf: boolean;
 };
 
 // Every scan gets its own folder: <documents>/scans/<id>/
@@ -19,7 +21,7 @@ export function pageUri(scan: Scan, page: string) {
 
 // The scanner writes pages to the cache, which Android may clear at any time.
 // Copy them somewhere permanent and remember them in scan.json.
-export async function saveScan(pageUris: string[]): Promise<Scan> {
+export async function saveScan(pageUris: string[], pdfUri?: string): Promise<Scan> {
   const id = Date.now().toString();
   const folder = folderFor(id);
   folder.create({ intermediates: true, idempotent: true });
@@ -30,8 +32,11 @@ export async function saveScan(pageUris: string[]): Promise<Scan> {
     await new File(uri).copy(page);
     pages.push(page.name);
   }
+  if (pdfUri) {
+    await new File(pdfUri).copy(new File(folder, "scan.pdf"));
+  }
 
-  const scan: Scan = { id, createdAt: Date.now(), pages };
+  const scan: Scan = { id, createdAt: Date.now(), pages, hasPdf: !!pdfUri };
   await new File(folder, "scan.json").write(JSON.stringify(scan));
   return scan;
 }
@@ -57,4 +62,10 @@ export async function getScan(id: string): Promise<Scan | null> {
 export function deleteScan(id: string) {
   const folder = folderFor(id);
   if (folder.exists) folder.delete();
+}
+
+// Opens the Android share sheet: Gmail, WhatsApp, Drive...
+export async function sharePdf(scan: Scan) {
+  const pdf = new File(folderFor(scan.id), "scan.pdf");
+  await Sharing.shareAsync(pdf.uri, { mimeType: "application/pdf", dialogTitle: "Share scan" });
 }
