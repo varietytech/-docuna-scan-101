@@ -47,3 +47,14 @@ export async function listScans(): Promise<Scan[]> {
   }
   return scans.sort((a, b) => b.createdAt - a.createdAt);
 }
+
+export async function getScan(id: string): Promise<Scan | null> {
+  const meta = new File(folderFor(id), "scan.json");
+  return meta.exists ? JSON.parse(await meta.text()) : null;
+}
+
+// Removes the folder and every page inside it
+export function deleteScan(id: string) {
+  const folder = folderFor(id);
+  if (folder.exists) folder.delete();
+}

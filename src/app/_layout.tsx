@@ -10,6 +10,7 @@ export default function RootLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: "Docuna Scan" }} />
+      <Stack.Screen name="scan/[id]" options={{ title: "Scan" }} />
     </Stack>
   );
 }

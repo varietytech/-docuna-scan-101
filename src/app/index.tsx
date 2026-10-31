@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { FlatList, Pressable, Text, View, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { CameraView } from "expo-camera";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { listScans, pageUri, saveScan, type Scan } from "@/lib/scans";
 
 export default function Index() {
@@ -31,7 +31,10 @@ export default function Index() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>No scans yet. Tap Scan to start.</Text>}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push({ pathname: "/scan/[id]", params: { id: item.id } })}
+          >
             <Image source={{ uri: pageUri(item, item.pages[0]) }} style={styles.thumb} />
             <View style={styles.info}>
               <Text style={styles.title}>Scan {new Date(item.createdAt).toLocaleDateString()}</Text>
@@ -40,7 +43,7 @@ export default function Index() {
                 {new Date(item.createdAt).toLocaleTimeString()}
               </Text>
             </View>
-          </View>
+          </Pressable>
         )}
       />
 
