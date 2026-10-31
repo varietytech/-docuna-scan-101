@@ -2,23 +2,24 @@ import { useState } from "react";
 import { Pressable, Text, View, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { CameraView } from "expo-camera";
+import { pageUri, saveScan, type Scan } from "@/lib/scans";
 
 export default function Index() {
-  const [pages, setPages] = useState<string[]>([]);
+  const [last, setLast] = useState<Scan | null>(null);
 
   async function scan() {
     // Opens the phone's own document scanner (ML Kit on Android)
     const result = await CameraView.scanDocumentAsync();
     if (!result) return; // cancelled, or no scanner on this phone
-    setPages(result.pages);
+    setLast(await saveScan(result.pages));
   }
 
   return (
     <View style={styles.container}>
-      {pages.length > 0 && (
-        <Image source={{ uri: pages[0] }} style={styles.preview} contentFit="contain" />
+      {last && (
+        <Image source={{ uri: pageUri(last, last.pages[0]) }} style={styles.preview} contentFit="contain" />
       )}
-      <Text style={styles.empty}>{pages.length} pages scanned</Text>
+      <Text style={styles.empty}>{last ? `Saved ${last.pages.length} pages` : "No scans yet"}</Text>
 
       <Pressable style={styles.scanButton} onPress={scan}>
         <Text style={styles.scanText}>Scan</Text>
