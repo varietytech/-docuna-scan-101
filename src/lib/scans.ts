@@ -35,3 +35,15 @@ export async function saveScan(pageUris: string[]): Promise<Scan> {
   await new File(folder, "scan.json").write(JSON.stringify(scan));
   return scan;
 }
+
+// Newest first. Any folder without a scan.json is skipped.
+export async function listScans(): Promise<Scan[]> {
+  if (!root.exists) return [];
+  const scans: Scan[] = [];
+  for (const item of root.list()) {
+    if (!(item instanceof Directory)) continue;
+    const meta = new File(item, "scan.json");
+    if (meta.exists) scans.push(JSON.parse(await meta.text()));
+  }
+  return scans.sort((a, b) => b.createdAt - a.createdAt);
+}

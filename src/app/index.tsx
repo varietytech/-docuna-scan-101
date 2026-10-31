@@ -1,25 +1,48 @@
-import { useState } from "react";
-import { Pressable, Text, View, StyleSheet } from "react-native";
+import { useCallback, useState } from "react";
+import { FlatList, Pressable, Text, View, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { CameraView } from "expo-camera";
-import { pageUri, saveScan, type Scan } from "@/lib/scans";
+import { useFocusEffect } from "expo-router";
+import { listScans, pageUri, saveScan, type Scan } from "@/lib/scans";
 
 export default function Index() {
-  const [last, setLast] = useState<Scan | null>(null);
+  const [scans, setScans] = useState<Scan[]>([]);
+
+  // Reload every time this screen comes back into view
+  useFocusEffect(
+    useCallback(() => {
+      listScans().then(setScans);
+    }, [])
+  );
 
   async function scan() {
     // Opens the phone's own document scanner (ML Kit on Android)
     const result = await CameraView.scanDocumentAsync();
     if (!result) return; // cancelled, or no scanner on this phone
-    setLast(await saveScan(result.pages));
+    const saved = await saveScan(result.pages);
+    setScans((list) => [saved, ...list]);
   }
 
   return (
     <View style={styles.container}>
-      {last && (
-        <Image source={{ uri: pageUri(last, last.pages[0]) }} style={styles.preview} contentFit="contain" />
-      )}
-      <Text style={styles.empty}>{last ? `Saved ${last.pages.length} pages` : "No scans yet"}</Text>
+      <FlatList
+        data={scans}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={<Text style={styles.empty}>No scans yet. Tap Scan to start.</Text>}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Image source={{ uri: pageUri(item, item.pages[0]) }} style={styles.thumb} />
+            <View style={styles.info}>
+              <Text style={styles.title}>Scan {new Date(item.createdAt).toLocaleDateString()}</Text>
+              <Text style={styles.meta}>
+                {item.pages.length} {item.pages.length === 1 ? "page" : "pages"} ·{" "}
+                {new Date(item.createdAt).toLocaleTimeString()}
+              </Text>
+            </View>
+          </View>
+        )}
+      />
 
       <Pressable style={styles.scanButton} onPress={scan}>
         <Text style={styles.scanText}>Scan</Text>
@@ -31,12 +54,38 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
-  preview: {
-    flex: 1,
+  list: {
+    padding: 16,
+    paddingBottom: 120,
+    gap: 12,
+  },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    padding: 12,
     borderRadius: 12,
     backgroundColor: "#FFFFFF",
+    elevation: 1,
+  },
+  thumb: {
+    width: 56,
+    height: 72,
+    borderRadius: 6,
+    backgroundColor: "#E5E7EB",
+  },
+  info: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  meta: {
+    marginTop: 4,
+    color: "#6B7280",
   },
   empty: {
     textAlign: "center",
